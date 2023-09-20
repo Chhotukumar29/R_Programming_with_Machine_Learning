@@ -10,3 +10,11 @@
 
 
 ## R Programming in Statistics
+* Step 1: Read in the Data
+* Step 2: Box-Whisker Plots
+* Step 3: Histograms
+* Step 4: Impute "Fix" all the numeric variables that have missing values
+* Step 5: One Hot Encoding
+
+## R Programming
+
