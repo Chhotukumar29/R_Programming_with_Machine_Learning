@@ -1,4 +1,4 @@
-# R_Programming_with_Machine_Learning-Algorithms
+# R_Programming_with_Machine_Learning_Codes
 
 ## R programming With Basic & GGPLOT  
 * Step 1: Describe the Data
