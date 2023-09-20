@@ -1,1 +1,54 @@
+```{r}
+# Iris dataset
+iris
+str( iris ) 
+summary( iris ) 
+head(iris)
+```
+
+
+```{r}
+# NOTCHED BOX WHISKERS
+boxplot( iris$Petal.Width, notch=TRUE ,col=c("red","green")) 
+boxplot( iris$Petal.Width ~ iris$Species, col=c("red","green") ,main="My Name is Chhotu Kumar" ) 
+```
+
+
+```{r}
+# HIST
+hist( iris$Petal.Width, col="#9162a1" ) 
+hist( iris$Petal.Width, breaks=15, col="#9162a1") 
+```
+
+
+```{r}
+# HIST PLOT
+hist( iris$Petal.Width, prob=TRUE,col="#9162a1" ) 
+lines( density( iris$Petal.Width ), col=c("#9162a1","black")) 
+```
+
+
+```{r}
+# SCATTER PLOT
+plot( iris$Petal.Width, iris$Petal.Length ) 
+plot( iris$Petal.Width, iris$Petal.Length, col=iris$Species ) 
+plot( iris$Petal.Width, iris$Petal.Length, col=iris$Species, pch=16 ) 
+```
+
+
+```{r}
+# SIMPLE MATH
+mean( iris$Petal.Width ) 
+median( iris$Petal.Width ) 
+min( iris$Petal.Width ) 
+max( iris$Petal.Width ) 
+sd( iris$Petal.Width ) 
+
+x = aggregate( x = iris$Petal.Width, by=list( iris$Species), FUN=mean ) 
+
+x = aggregate( x = iris$Petal.Width, by=list( iris$Species), FUN=median ) 
+x = x[ order( x$x, decreasing=TRUE), ] 
+x
+```
+
 
