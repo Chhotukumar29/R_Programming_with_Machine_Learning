@@ -1,0 +1,304 @@
+---
+output:
+  html_document: default
+  word_document: default
+---
+```{r}
+# import necessary libraries
+library(dplyr)
+library(rpart)
+library(partykit)
+library(rpart.plot)
+library(randomForest)
+library(gbm)
+library(pROC)
+library(ROCR)
+library(caret)
+library(knitr)
+```
+
+# Step 1: Read in the Data
+```{r}
+df <- read.csv("C:/Users/KPK/Desktop/HMEQ_Scrubbed.csv")
+View(df) 
+```
+
+
+```{r}
+# data info
+str(df)
+```
+
+
+```{r}
+# data summary
+summary(df)
+```
+
+
+```{r}
+# top 6 rows 
+head(df)
+```
+
+
+# Step 2: Classification Models
+```{r}
+# Set seed reproducibility
+set.seed(123)  
+splitIndex <- createDataPartition(df$TARGET_BAD_FLAG, p = 0.7, list = FALSE, times = 1)
+trainingdf <- df[splitIndex, ]
+testingdf <- df[-splitIndex, ]
+```
+
+
+```{r}
+# decision tree model
+tree_model <- rpart(TARGET_BAD_FLAG ~ LOAN, data = trainingdf)
+
+# List important variables decision tree
+printcp(tree_model) 
+```
+
+
+```{r}
+# Plot decision tree
+plot(tree_model)
+```
+
+
+```{r}
+suppressWarnings({
+# the random forest 
+rf_model <- randomForest(TARGET_BAD_FLAG ~ LOAN, data = trainingdf)
+
+# List important variables random forest
+varImpPlot(rf_model) })
+```
+
+
+```{r}
+# the gradient boosting model
+gb_model <- gbm(TARGET_BAD_FLAG ~ LOAN, data = trainingdf)
+
+# List important variables for the gradient boosting model
+summary(gb_model)
+
+# variable importance
+gb_variable_importance <- summary(gb_model, plot = FALSE)
+```
+
+
+```{r}
+# Predictions for all models
+tree_preds <- predict(tree_model, newdata = testingdf, type = "vector")
+rf_preds <- predict(rf_model, newdata = testingdf, type = "response")
+gb_preds <- predict(gb_model, newdata = testingdf, n.trees = 100, type = "response")
+
+# prediction objects
+tree_pred_obj <- prediction(tree_preds, testingdf$TARGET_BAD_FLAG)
+rf_pred_obj <- prediction(rf_preds, testingdf$TARGET_BAD_FLAG)
+gb_pred_obj <- prediction(gb_preds, testingdf$TARGET_BAD_FLAG)
+
+# AUC
+auc_tree <- performance(tree_pred_obj, "auc")@y.values[[1]]
+auc_rf <- performance(rf_pred_obj, "auc")@y.values[[1]]
+auc_gb <- performance(gb_pred_obj, "auc")@y.values[[1]]
+
+# ROC curves
+tree_perf <- performance(tree_pred_obj, "tpr", "fpr")
+rf_perf <- performance(rf_pred_obj, "tpr", "fpr")
+gb_perf <- performance(gb_pred_obj, "tpr", "fpr")
+
+# AUC
+cat("AUC for Decision Tree:", auc_tree, "/n")
+cat("AUC for Random Forest:", auc_rf, "/n")
+cat("AUC for Gradient Boosting:", auc_gb, "/n")
+```
+
+
+```{r}
+# Plot ROC curves
+plot(tree_perf, col = "darkblue", lwd = 2, main = "ROC Curves for Decision Tree") 
+plot(rf_perf, col = "darkred", lwd = 2, main = "ROC Curves for Random Forest") 
+plot(gb_perf, col = "darkgreen", lwd = 2, main = "ROC Curves for Gradient Boosting") 
+```
+
+# Step 3: Regression Decision Tree
+```{r}
+# the decision tree model
+tree_model <- rpart(TARGET_LOSS_AMT ~ LOAN, data = trainingdf)
+
+# Plot the decision tree
+plot(tree_model)
+
+# Print summary of the tree
+summary(tree_model)
+```
+
+
+```{r}
+# Create the random forest model
+rf_model <- randomForest(TARGET_LOSS_AMT ~ LOAN, data = trainingdf)
+
+# List important variables for the random forest
+varImpPlot(rf_model)
+```
+
+
+```{r}
+# Create the gradient boosting model
+gb_model <- gbm(TARGET_LOSS_AMT ~ LOAN, data = trainingdf)
+
+# List important variables for the gradient boosting model
+summary(gb_model)
+
+# Plot variable importance
+plot(gb_model, n.trees = 100, main = "Variable Importance")
+```
+
+
+```{r}
+tree_preds <- predict(tree_model, newdata = testingdf)
+tree_rmse <- sqrt(mean((tree_preds - testingdf$TARGET_LOSS_AMT)^2))
+```
+
+
+```{r}
+head(tree_preds)
+tree_rmse
+```
+
+
+```{r}
+rf_preds <- predict(rf_model, newdata = testingdf)
+rf_rmse <- sqrt(mean((rf_preds - testingdf$TARGET_LOSS_AMT)^2))
+```
+
+
+```{r}
+head(rf_preds)
+rf_rmse
+```
+
+
+```{r}
+gb_preds <- predict(gb_model, newdata = testingdf, n.trees = 100)
+gb_rmse <- sqrt(mean((gb_preds - testingdf$TARGET_LOSS_AMT)^2))
+```
+
+
+```{r}
+head(gb_preds)
+gb_rmse
+```
+
+
+# Repeat and Compare:
+Repeat the entire process with different training and testing data at least three times to assess model stability and generalization.
+
+# Determine the Best Model:
+To determine which model performed best, compare the RMSE values. Lower RMSE indicates a better-performing model in terms of predictive accuracy. Additionally, consider other factors like interpretability and ease of use.
+
+# Recommendation:
+Your choice of the best model may depend on factors beyond RMSE. Decision trees are interpretable but may not provide the best predictive accuracy. Random forests and gradient boosting typically offer better predictive accuracy but might be less interpretable. Choose the model that best aligns with your project goals and constraints.
+
+
+# Step 4: Probability / Severity Model Decision Tree (Optional Bonus Points)
+```{r}
+suppressWarnings({
+# Split data into training and testing sets
+set.seed(123)
+train_index <- sample(1:nrow(df), 0.7 * nrow(df))
+train_data <- df[train_index, ]
+test_data <- df[-train_index, ]
+
+# Predict TARGET_BAD_FLAG
+rf_flag_model <- randomForest(TARGET_BAD_FLAG ~ LOAN, data = train_data, ntree = 500)
+
+# Develop Severity Models
+flag_1_data <- train_data[train_data$TARGET_BAD_FLAG == 1, ]
+
+# Decision Tree for Severity
+tree_severity_model <- rpart(TARGET_LOSS_AMT ~ LOAN, data = flag_1_data)
+
+# Random Forest for Severity
+rf_severity_model <- randomForest(TARGET_LOSS_AMT ~ LOAN, data = flag_1_data, ntree = 500)
+
+# Gradient Boosting for Severity
+gbm_severity_model <- gbm(TARGET_LOSS_AMT ~ LOAN, data = flag_1_data, distribution = "gaussian", n.trees = 1000, interaction.depth = 5)
+
+# Combine Probability and Severity Models
+# Predict the probability of default
+probability_default <- predict(rf_flag_model, test_data, type = "response")
+
+# Predict the severity
+severity_predictions <- predict(gbm_severity_model, test_data, n.trees = 1000)
+
+# the loss given default
+loss_given_default <- probability_default * severity_predictions
+
+# RMSE for Probability / Severity Model
+rmse_prob_severity <- sqrt(mean((test_data$TARGET_LOSS_AMT - loss_given_default)^2))
+rmse_prob_severity
+})
+```
+
+
+```{r}
+suppressWarnings({
+# Number of iterations
+num_iterations <- 3
+rmse_results <- numeric(num_iterations)
+
+# Loop for multiple iterations
+for (i in 1:num_iterations) {
+  # Split data into training and testing sets
+  set.seed(i)  # Use a different seed for each iteration
+  train_index <- sample(1:nrow(df), 0.7 * nrow(df))
+  train_data <- df[train_index, ]
+  test_data <- df[-train_index, ]
+
+  # Predict TARGET_BAD_FLAG
+  rf_flag_model <- randomForest(TARGET_BAD_FLAG ~ LOAN, data = train_data, ntree = 500)
+
+  # Develop Severity Models
+  flag_1_data <- train_data[train_data$TARGET_BAD_FLAG == 1, ]
+
+  # Decision Trees Severity
+  tree_severity_model <- rpart(TARGET_LOSS_AMT ~ LOAN, data = flag_1_data)
+
+  # Random Forest Severity
+  rf_severity_model <- randomForest(TARGET_LOSS_AMT ~ LOAN, data = flag_1_data, ntree = 500)
+
+  # Gradient Boosting Severity
+  gbm_severity_model <- gbm(TARGET_LOSS_AMT ~ LOAN, data = flag_1_data, distribution = "gaussian", n.trees = 1000, interaction.depth = 5)
+
+  # Combine Probability and Severity Models
+  probability_default <- predict(rf_flag_model, test_data, type = "response")
+
+  # Predict the severity
+  severity_predictions <- predict(gbm_severity_model, test_data, n.trees = 1000)
+
+  # the loss given default
+  loss_given_default <- probability_default * severity_predictions
+
+  # RMSE Probability / Severity Model
+  rmse_prob_severity <- sqrt(mean((test_data$TARGET_LOSS_AMT - loss_given_default)^2))
+  rmse_results[i] <- rmse_prob_severity
+} })
+
+```
+
+
+```{r}
+# Print RMSE results
+print(rmse_results) 
+```
+
+
+```{r}
+
+```
+
+
