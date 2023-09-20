@@ -6,7 +6,7 @@
 * Step 3: Histograms
 * Step 4: Scatter Plots
 * Step 5: Simple Math
-* Link: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Basic%20%26%20GGPLOT
+* Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Basic%20%26%20GGPLOT
 
 
 ## R Programming With Statistics
@@ -15,27 +15,27 @@
 * Step 3: Histograms
 * Step 4: Impute "Fix" all the numeric variables that have missing values
 * Step 5: One Hot Encoding
-* Link: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Statistics%20in%20R
+* Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Statistics%20in%20R
 
 ## R Programming with Decision Tree
 * Step 1: Read in the Data
 * Step 2: Classification Decision Tree
 * Step 3: Regression Decision Tree
 * Step 4: Probability / Severity Model Decision Tree
-* Link: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Decision%20Tree
+* Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Decision%20Tree
 
 ## R Programming with Model Validation
 * Step 1: Read in the Data
 * Step 2: Classification Decision Tree
 * Step 3: Regression Decision Tree
 * Step 4: Probability / Severity Model Decision Tree 
-* Link: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Modal%20Validation%20in%20Decision%20Tree
+* Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Modal%20Validation%20in%20Decision%20Tree
 
 ## R Programming with Random Forest/ Gradient Boosting Models
 * Step 1: Read in the Data
 * Step 2: Classification Models
 * Step 3: Regression Decision Tree
 * Step 4: Probability / Severity Model Decision Tree
-* Link: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Random%20Forest%20and%20Gredient%20Boosting%20Models
+* Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Random%20Forest%20and%20Gredient%20Boosting%20Models
 
 
