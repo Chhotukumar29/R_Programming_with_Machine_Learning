@@ -10,7 +10,7 @@ head(iris)
 ```{r}
 # NOTCHED BOX WHISKERS
 boxplot( iris$Petal.Width, notch=TRUE ,col=c("red","green")) 
-boxplot( iris$Petal.Width ~ iris$Species, col=c("red","green") ,main="My Name is Qudrath Ullah Khan" ) 
+boxplot( iris$Petal.Width ~ iris$Species, col=c("red","green") ,main="My Name is Chhotu Kumar" ) 
 ```
 
 
