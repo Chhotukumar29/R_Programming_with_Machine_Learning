@@ -1,0 +1,113 @@
+```{r}
+library(knitr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r}
+# Step 1
+#	Read the data into R
+read.csv("C:/Users/KPK/Downloads/GYPR Office/R Studio/GitHub/HMEQ_Loss.csv") -> df
+df
+```
+
+
+```{r}
+#	List the structure of the data (str)
+str(df)
+```
+
+
+```{r}
+#	Execute a summary of the data
+summary(df)
+```
+
+
+```{r}
+#	Print the first six records
+head(df)
+```
+
+
+```{r}
+a <- df %>% 
+  group_by(TARGET_BAD_FLAG)
+```
+
+
+```{r}
+box_plot <- df %>%
+  ggplot(aes(x = factor(TARGET_BAD_FLAG), y = LOAN)) +
+  geom_boxplot(aes(fill = factor(TARGET_BAD_FLAG))) +
+  labs(title = 'My name is Chhotu Kumar') + 
+  theme_minimal() +
+  scale_fill_manual(values = c("#E6E6FA", "#AA98A9")) 
+box_plot
+```
+
+# Comment: 1 has less outliers in Target_Bad_Flag column when I created a whisker- box plot
+
+```{r}
+suppressWarnings({
+# HISTOGRAM WITH Density
+hist( df$LOAN, prob=TRUE , col = '#AA336A', bredfs = 60) 
+lines( density(df$LOAN)) 
+})
+```
+
+
+```{r}
+# Impute Target variable missing values with 0
+df$TARGET_LOSS_AMT[is.na(df$TARGET_LOSS_AMT)] <- 0
+
+# Impute remaining numeric variables with median and create flags
+imputed_vars <- c("LOAN", "MORTDUE", "VALUE", "YOJ", "DEROG", "DELINQ", "CLAGE", "NINQ", "CLNO", "DEBTINC")
+for (var in imputed_vars) {
+  imputed_value <- median(df[[var]], na.rm = TRUE)
+  df <- df %>%
+    mutate(!!paste0("IMP_", var) := if_else(is.na(df[[var]]), imputed_value, df[[var]]),
+           !!paste0("M_", var) := if_else(is.na(df[[var]]), 1, 0)) %>%
+    select(-{{var}})
+}
+
+summary(df)
+```
+
+
+```{r}
+flag_sl <- colSums(df %>% select(starts_with("M_")))
+print(flag_sl)
+```
+
+
+```{r}
+colSums(is.na(df))
+```
+
+
+```{r}
+suppressWarnings({ 
+# one-hot encode
+categorical_vars <- c("REASON", "JOB")
+
+df_encoded <- df %>%
+  mutate(across(all_of(categorical_vars), as.factor)) %>%
+  pivot_wider(names_from = all_of(categorical_vars), values_from = c(all_of(categorical_vars)), values_fn = length, names_prefix = "FLAG_") %>%
+  replace(is.na(.), 0)
+
+df_encoded <- df_encoded %>%
+  select(-one_of(categorical_vars))
+
+summary(df_encoded)
+})
+```
+
+
+```{r}
+head(df_encoded)
+```
+
+
