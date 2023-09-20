@@ -1,6 +1,6 @@
 # R_Programming_with_Machine_Learning-Algorithms
 
-## R programming GGPLOT  
+## R programming Basic & GGPLOT  
 * Step 1: Describe the Data
 * Step 2: Box-Whisker Plots
 * Step 3: Histograms
