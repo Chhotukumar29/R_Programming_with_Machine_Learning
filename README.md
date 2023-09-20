@@ -29,8 +29,13 @@
 * Step 2: Classification Decision Tree
 * Step 3: Regression Decision Tree
 * Step 4: Probability / Severity Model Decision Tree 
-* Link: 
+* Link: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Modal%20Validation%20in%20Decision%20Tree
 
- 
+## R Programming with Random Forest/ Gradient Boosting Models
+* Step 1: Read in the Data
+* Step 2: Classification Models
+* Step 3: Regression Decision Tree
+* Step 4: Probability / Severity Model Decision Tree
+* Link: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Random%20Forest%20and%20Gredient%20Boosting%20Models
 
 
