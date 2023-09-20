@@ -1,6 +1,6 @@
 # R_Programming_with_Machine_Learning_Codes
 
-## R programming With Basic & GGPLOT  
+## 1. R programming With Basic & GGPLOT  
 * Step 1: Describe the Data
 * Step 2: Box-Whisker Plots
 * Step 3: Histograms
@@ -9,7 +9,7 @@
 * Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Basic%20%26%20GGPLOT
 
 
-## R Programming With Statistics
+## 2. R Programming With Statistics
 * Step 1: Read in the Data
 * Step 2: Box-Whisker Plots
 * Step 3: Histograms
@@ -17,21 +17,21 @@
 * Step 5: One Hot Encoding
 * Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Statistics%20in%20R
 
-## R Programming with Decision Tree
+## 3. R Programming with Decision Tree
 * Step 1: Read in the Data
 * Step 2: Classification Decision Tree
 * Step 3: Regression Decision Tree
 * Step 4: Probability / Severity Model Decision Tree
 * Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Decision%20Tree
 
-## R Programming with Model Validation
+## 4. R Programming with Model Validation
 * Step 1: Read in the Data
 * Step 2: Classification Decision Tree
 * Step 3: Regression Decision Tree
 * Step 4: Probability / Severity Model Decision Tree 
 * Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning-Algorithms/tree/main/Modal%20Validation%20in%20Decision%20Tree
 
-## R Programming with Random Forest/ Gradient Boosting Models
+## 5. R Programming with Random Forest/ Gradient Boosting Models
 * Step 1: Read in the Data
 * Step 2: Classification Models
 * Step 3: Regression Decision Tree
