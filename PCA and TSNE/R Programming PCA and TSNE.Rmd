@@ -1,0 +1,321 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+```{r}
+# Necessary libraries
+library(dplyr)
+library(knitr)
+library(gbm)
+library(pROC)
+library(ROCR)
+library(MASS)
+library(scales)
+library(caret)
+library(rpart)
+library(tsne)
+library(Rtsne)
+library(stats)
+library(partykit)
+library(FactoMineR)
+library(factoextra)
+library(rpart.plot)
+library(randomForest)
+```
+
+
+```{r}
+# load and read the data
+data <- read.csv("HMEQ_Scrubbed.csv")
+```
+
+
+```{r}
+# top six rows of data
+head(data)
+```
+
+
+```{r}
+# data info
+str(data) 
+```
+
+
+```{r}
+# summary of data
+summary(data) 
+```
+
+
+```{r}
+# all columns in the data
+colnames(data)
+```
+
+
+```{r}
+# Step 1: Use the Decision Tree / Random Forest / Decision Tree / Regression code from Week 6 as a Starting Point.
+
+suppressWarnings({
+# Handle missing values (for example, replacing NAs with mean)
+data[is.na(data)] <- mean(data, na.rm = TRUE)
+
+# Create training and testing sets
+set.seed(123)
+train_index <- sample(1:nrow(data), nrow(data) * 0.8)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
+
+# Decision tree model
+dt_model <- rpart(TARGET_BAD_FLAG ~ . -TARGET_LOSS_AMT , data = train_data, method = "class")
+
+# Random forest model
+rf_model <- randomForest(TARGET_BAD_FLAG ~ . -TARGET_LOSS_AMT , data = train_data, ntree = 100)
+
+# Build a Linear Regression model
+lr_model <- lm(TARGET_BAD_FLAG ~ .  -TARGET_LOSS_AMT , data = train_data)
+
+# Decision tree predictions
+dt_predictions <- predict(dt_model, newdata = test_data, type = "class")
+
+# Random forest predictions
+rf_predictions <- predict(rf_model, newdata = test_data, type = "class")
+
+# Linear Regreesion predictions
+lr_predictions <- predict(lr_model, newdata = test_data)
+
+# Evaluate the model (for regression)
+rmse <- sqrt(mean((lr_predictions - test_data$TARGET_BAD_FLAG)^2))
+mae <- mean(abs(lr_predictions - test_data$TARGET_BAD_FLAG))
+r_squared <- 1 - sum((test_data$TARGET_BAD_FLAG - lr_predictions)^2) / sum((test_data$TARGET_BAD_FLAG - mean(test_data$TARGET_BAD_FLAG))^2)
+
+# evaluation metrics
+cat("RMSE:", rmse, "\n")
+cat("MAE:", mae, "\n")
+cat("R-squared:", r_squared , "\n")
+}) 
+```
+
+
+```{r}
+# accuracy
+dt_accuracy <- sum(dt_predictions == test_data$TARGET_BAD_FLAG) / nrow(test_data)
+rf_accuracy <- sum(rf_predictions == test_data$TARGET_BAD_FLAG) / nrow(test_data)
+lr_accuracy <- sum(lr_predictions == test_data$TARGET_BAD_FLAG) / nrow(test_data)
+
+# result of the accuracy
+print(paste("Decision tree accuracy:", percent(dt_accuracy)))
+print(paste("Random forest accuracy:", percent(rf_accuracy)))
+print(paste("Linear Regression accuracy:", percent(lr_accuracy)))
+```
+
+
+```{r}
+# Step 2: PCA Analysis
+suppressWarnings({
+
+# Select only the continuous variables (exclude flags and target variables)
+continuous_vars <- data[, c("LOAN", "IMP_MORTDUE", "M_MORTDUE", "IMP_VALUE", "M_VALUE", "IMP_YOJ", "M_YOJ", "IMP_DEROG", "M_DEROG", "IMP_DELINQ", "M_DELINQ", "IMP_CLAGE", "M_CLAGE", "IMP_NINQ", "M_NINQ", "IMP_CLNO", "M_CLNO", "IMP_DEBTINC", "M_DEBTINC")]
+
+# Standardize the continuous variables (center and scale)
+scaled_continuous_vars <- scale(continuous_vars)
+
+# Perform PCA
+pca_result <- prcomp(scaled_continuous_vars)
+
+# Display the Scree Plot
+screeplot(pca_result, type = "lines", main = "Scree Plot")
+
+# Determine the number of principal components to use based on the Scree Plot
+# You can visually inspect the plot to decide how many components to retain
+# Typically, you want to retain components that capture most of the variance
+# In this example, let's say you decide to retain the first 4 components
+num_components_to_use <- 4
+
+# Print the weights of the Principal Components
+print(pca_result$rotation[, 1:num_components_to_use])
+
+# Perform a scatter plot using the first two Principal Components and color by Target Fla
+# Create a data frame with PC scores and Target Flag
+pca_data <- data.frame(
+  PC1 = pca_result$x[, 1],
+  PC2 = pca_result$x[, 2],
+  Target_Flag = data$TARGET_BAD_FLAG
+)
+
+# Plot the scatter plot
+ggplot(pca_data, aes(x = PC1, y = PC2, color = factor(Target_Flag))) +
+  geom_point() +
+  labs(title = "Scatter Plot of First Two Principal Components") +
+  scale_color_discrete(name = "Target Flag", labels = c("Non-defaults", "Defaults")) })
+
+# Comment on whether the first two Principal Components are predictive based on the scatter plot
+# Interpretation depends on the separation between defaults and non-defaults in the plot
+# If there's clear separation, it suggests that the first two components are predictive
+# If it's not clear, additional analysis or more components may be needed
+
+```
+
+
+
+```{r}
+# Step 3: tSNE Analysis
+suppressWarnings({
+  
+# Select only the continuous variables (exclude flags and target variables)
+continuous_vars <- data[, c("LOAN", "IMP_MORTDUE", "M_MORTDUE", "IMP_VALUE", "M_VALUE", "IMP_YOJ", "M_YOJ", "IMP_DEROG", "M_DEROG", "IMP_DELINQ", "M_DELINQ", "IMP_CLAGE", "M_CLAGE", "IMP_NINQ", "M_NINQ", "IMP_CLNO", "M_CLNO", "IMP_DEBTINC", "M_DEBTINC")]
+
+# Perform t-SNE analysis with perplexity=30
+tsne_result_30 <- Rtsne(continuous_vars, perplexity = 30, dims = 2)
+
+# Perform t-SNE analysis with higher perplexity (e.g., 50)
+tsne_result_high <- Rtsne(continuous_vars, perplexity = 50, dims = 2)
+
+# Perform t-SNE analysis with lower perplexity (e.g., 10)
+tsne_result_low <- Rtsne(continuous_vars, perplexity = 10, dims = 2)
+
+# Create data frames with t-SNE results and Target Flag
+tsne_data_30 <- data.frame(
+  tSNE1 = tsne_result_30$Y[, 1],
+  tSNE2 = tsne_result_30$Y[, 2],
+  Target_Flag = data$TARGET_BAD_FLAG
+)
+
+tsne_data_high <- data.frame(
+  tSNE1 = tsne_result_high$Y[, 1],
+  tSNE2 = tsne_result_high$Y[, 2],
+  Target_Flag = data$TARGET_BAD_FLAG
+)
+
+tsne_data_low <- data.frame(
+  tSNE1 = tsne_result_low$Y[, 1],
+  tSNE2 = tsne_result_low$Y[, 2],
+  Target_Flag = data$TARGET_BAD_FLAG
+)
+
+# Create scatter plots for t-SNE results with different perplexity values
+plot_30 <- ggplot(tsne_data_30, aes(x = tSNE1, y = tSNE2, color = factor(Target_Flag))) +
+  geom_point() +
+  labs(title = "t-SNE (Perplexity = 30)") +
+  scale_color_discrete(name = "Target Flag", labels = c("Non-defaults", "Defaults"))
+
+plot_high <- ggplot(tsne_data_high, aes(x = tSNE1, y = tSNE2, color = factor(Target_Flag))) +
+  geom_point() +
+  labs(title = "t-SNE (Perplexity = 50)") +
+  scale_color_discrete(name = "Target Flag", labels = c("Non-defaults", "Defaults"))
+
+plot_low <- ggplot(tsne_data_low, aes(x = tSNE1, y = tSNE2, color = factor(Target_Flag))) +
+  geom_point() +
+  labs(title = "t-SNE (Perplexity = 10)") +
+  scale_color_discrete(name = "Target Flag", labels = c("Non-defaults", "Defaults"))
+
+# Print or display the scatter plots
+print(plot_30)
+print(plot_high)
+print(plot_low)
+
+# Comment on whether t-SNE values appear predictive based on the scatter plots
+# Determine which perplexity value best predicts the Target Flag (based on visual assessment)
+
+# Train two Random Forest models to predict t-SNE values
+rf_model_tSNE_30 <- randomForest(Target_Flag ~ tSNE1 + tSNE2, data = tsne_data_30)
+rf_model_tSNE_high <- randomForest(Target_Flag ~ tSNE1 + tSNE2, data = tsne_data_high)
+
+# You can further evaluate the model performance and make predictions with these models
+# we first perform t-SNE analysis with three different perplexity values (30, 50, and 10) and create scatter plots to visualize the results. 
+# You should visually assess which perplexity value provides the most meaningful separation between "defaults" and "non-defaults." 
+# Once you've determined the best perplexity value, you can train two Random Forest models to predict the t-SNE values for that perplexity.
+
+})
+```
+
+
+```{r}
+# Step 4: Tree and Regression Analysis on the Original Data
+suppressWarnings({
+# Create a Decision Tree model to predict loan default
+decision_tree_model <- rpart(TARGET_BAD_FLAG ~ LOAN + IMP_MORTDUE + M_MORTDUE + IMP_VALUE + M_VALUE + IMP_YOJ + M_YOJ + IMP_DEROG + M_DEROG + IMP_DELINQ + M_DELINQ + IMP_CLAGE + M_CLAGE + IMP_NINQ + M_NINQ + IMP_CLNO + M_CLNO + IMP_DEBTINC + M_DEBTINC, data = data)
+
+# Plot the decision tree
+plot(decision_tree_model)
+text(decision_tree_model)
+
+# Comment on the variables included in the model based on the tree structure
+
+# Create a Logistic Regression model with variable selection
+# You can use forward, backward, or stepwise variable selection methods
+# Here, we'll use stepwise variable selection
+logistic_model <- glm(TARGET_BAD_FLAG ~ LOAN + IMP_MORTDUE + M_MORTDUE + IMP_VALUE + M_VALUE + IMP_YOJ + M_YOJ + IMP_DEROG + M_DEROG + IMP_DELINQ + M_DELINQ + IMP_CLAGE + M_CLAGE + IMP_NINQ + M_NINQ + IMP_CLNO + M_CLNO + IMP_DEBTINC + M_DEBTINC, data = data, family = binomial)
+stepwise_model <- stepAIC(logistic_model, direction = "both")
+
+# Display the variables included in the logistic regression model
+summary(stepwise_model)
+
+# Create an ROC curve
+predictions <- predict(stepwise_model, type = "response")
+roc_obj <- roc(data$TARGET_BAD_FLAG, predictions)
+
+# Plot the ROC curve
+plot(roc_obj, main = "ROC Curve for Logistic Regression Model")
+lines(0:1, 0:1, col = "blue")
+
+# Calculate and display the Area Under the ROC Curve (AUC)
+auc_value <- auc(roc_obj)
+print(paste("AUC:", auc_value)) 
+
+})
+```
+
+
+```{r}
+# Step 5: Tree and Regression Analysis on the PCA/tSNE Data
+suppressWarnings({
+# Append Principal Component values from Step 2 to the dataset
+data$PC1 <- tsne_data_30$PC1 # Replace 'tsne_data_best' with the appropriate t-SNE results
+data$PC2 <- tsne_data_30$PC2
+
+# Append t-SNE values from Step 3 to the dataset
+data$tSNE1 <- tsne_data_30$tSNE1 # Replace 'tsne_data_best' with the appropriate t-SNE results
+data$tSNE2 <- tsne_data_30$tSNE2
+
+# Remove all continuous variables (set them to NULL)
+data <- subset(data, select = -c(IMP_MORTDUE, M_MORTDUE, IMP_VALUE, M_VALUE, IMP_YOJ, M_YOJ, IMP_DEROG, M_DEROG, IMP_DELINQ, M_DELINQ, IMP_CLAGE, M_CLAGE, IMP_NINQ, M_NINQ, IMP_CLNO, M_CLNO, IMP_DEBTINC, M_DEBTINC))
+
+# Create a Decision Tree model to predict loan default (Target Flag=1)
+decision_tree_model_pca_tsne <- rpart(TARGET_BAD_FLAG ~ ., data = data)
+
+# Print the decision tree
+print(decision_tree_model_pca_tsne)
+
+# Comment on the variables included in the model, including Principal Components and t-SNE values
+
+# Create a Logistic Regression model with variable selection
+# You can use forward, backward, or stepwise variable selection methods
+# Here, we'll use stepwise variable selection
+logistic_model_pca_tsne <- glm(TARGET_BAD_FLAG ~ . , data = data, family = binomial)
+stepwise_model_pca_tsne <- stepAIC(logistic_model_pca_tsne, direction = "both")
+
+# Display the variables included in the logistic regression model
+summary(stepwise_model_pca_tsne)
+
+# Create an ROC curve
+predictions_pca_tsne <- predict(stepwise_model_pca_tsne, type = "response")
+roc_obj_pca_tsne <- roc(data$TARGET_BAD_FLAG, predictions_pca_tsne)
+
+# Plot the ROC curve
+plot(roc_obj_pca_tsne, main = "ROC Curve for Logistic Regression Model (with PCA/tSNE)")
+lines(0:1, 0:1, col = "red")
+
+# Calculate and display the Area Under the ROC Curve (AUC)
+auc_value_pca_tsne <- auc(roc_obj_pca_tsne)
+print(paste("AUC:", auc_value_pca_tsne))
+
+})
+```
+
+# Step 6: Comment
+# I started by contrasting the t-SNE and PCA values. As a result, I learned that the AUC (Area Under the Curve) for step 4 was equal to 1. This suggests a strong showing at that point. But as I moved on to step 5, I noticed that the AUC had marginally dropped to 0.904. An AUC of 0.904 in step 5 still denotes a commendable level of performance despite this decline. These results indicate that the model remained reliable and efficient in both rounds of the analysis, despite a minor drop in AUC from step 4 to step 5.
+
+
