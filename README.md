@@ -44,7 +44,8 @@
 * Step 2: Classification Models
 * Step 3: Linear Regression
 * Step 4: Probability / Severity Model (Optional Bonus Points)
- 
+*  
+
 ## 7. R Programming PCA and TSNE
 * Step 1: Use the Decision Tree / Random Forest / Decision Tree / Regression code from Week 6 as a Starting Point
 * Step 2: PCA Analysis
@@ -52,3 +53,4 @@
 * Step 4: Tree and Regression Analysis on the Original Data
 * Step 5: Tree and Regression Analysis on the PCA/tSNE Data
 * Step 6: Comment
+* 
