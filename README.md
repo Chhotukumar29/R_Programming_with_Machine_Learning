@@ -43,7 +43,7 @@
 * Step 1: Use the Decision Tree / Random Forest / Decision Tree code from Week 5 as a Starting Point
 * Step 2: Classification Models
 * Step 3: Linear Regression
-* Step 4: Probability / Severity Model (Optional Bonus Points)
+* Step 4: Probability / Severity Model
 * Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning_Codes/tree/main/Linear%20and%20Logistic%20Regression
 
 ## 7. R Programming PCA and TSNE
