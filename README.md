@@ -52,5 +52,15 @@
 * Step 3: tSNE Analysis
 * Step 4: Tree and Regression Analysis on the Original Data
 * Step 5: Tree and Regression Analysis on the PCA/tSNE Data
-* Step 6: Comment
+* Step 6: Conclusion
 * Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning_Codes/tree/main/PCA%20and%20TSNE
+
+
+## 8. R Programming Clustering Analysis
+* Step 1: Step 1: Use the code from Week 7 as a Starting Point
+* Step 2: PCA Analysis 
+* Step 3: Cluster Analysis - Find the Number of Clusters
+* Step 4: Cluster Analysis
+* Step 5: Describe the Clusters Using Decision Trees
+* Step 6: Conclusion
+* Link of code: https://github.com/Chhotukumar29/R_Programming_with_Machine_Learning_Codes/tree/main/Clustering%20Analysis
