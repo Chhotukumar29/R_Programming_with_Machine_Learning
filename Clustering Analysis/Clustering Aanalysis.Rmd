@@ -1,0 +1,282 @@
+---
+output:
+  html_document: default
+  word_document: default
+---
+```{r}
+# Necessary libraries
+library(scales)
+library(MASS)
+library(tsne)
+library(rpart)
+library(Rtsne)
+library(dplyr)
+library(knitr)
+library(stats)
+library(caret)
+library(gbm)
+library(pROC)
+library(ROCR)
+library(partykit)
+library(flexclust)
+library(FactoMineR)
+library(factoextra)
+library(rpart.plot)
+library(randomForest)
+```
+
+
+```{r}
+# loading data
+HMEQ <- read.csv("C:/Users/chhot/Downloads/GYPR/HMEQ_Scrubbed.csv")
+```
+
+
+```{r}
+# first 6 rows 
+head(HMEQ)
+```
+
+
+# Step 1: Use the code from Week 7 as a Starting Point
+```{r}
+suppressWarnings({
+# we will use some column names
+selected_columns <- HMEQ[, c("LOAN", "IMP_MORTDUE", "M_MORTDUE", "IMP_VALUE", "M_VALUE", "IMP_YOJ", "M_YOJ", "IMP_DEROG", "M_DEROG", "IMP_DELINQ", "M_DELINQ", "IMP_CLAGE", "M_CLAGE", "IMP_NINQ", "M_NINQ", "IMP_CLNO", "M_CLNO", "IMP_DEBTINC", "M_DEBTINC")]
+
+# Standardize
+scaled_HMEQ <- scale(selected_columns)
+
+# Perform PCA with scaled data
+pca_result <- prcomp(scaled_HMEQ)
+
+# Scree Plot with lines
+screeplot(pca_result, type = "lines", main = "Scree Plot")
+
+# the number of principal components to use based on the Scree Plot
+# first 4 components
+num_components_to_use <- 4
+
+# weights of the Principal Components
+print(pca_result$rotation[, 1:num_components_to_use])
+
+# Create a data frame with PC scores and Target Flag
+pca_HMEQ <- data.frame(
+  PC1 = pca_result$x[, 1],
+  PC2 = pca_result$x[, 2],
+  Target_Flag = HMEQ$TARGET_BAD_FLAG
+)
+
+# Scatter Plot of the first two Principal Components
+library(ggplot2)
+ggplot(pca_HMEQ, aes(x = PC1, y = PC2, color = factor(Target_Flag))) +
+  geom_point() +
+  labs(title = "First Two Principal Components of scatter plot") +
+  scale_color_discrete(name = "Target Flag", labels = c("Non-defaults", "Defaults"))
+})
+```
+
+
+```{r}
+suppressWarnings({
+  
+# Select the columns you want to include in t-SNE
+selected_columns <- HMEQ[, c("LOAN", "IMP_MORTDUE", "M_MORTDUE", "IMP_VALUE", "M_VALUE", "IMP_YOJ", "M_YOJ", "IMP_DEROG", "M_DEROG", "IMP_DELINQ", "M_DELINQ", "IMP_CLAGE", "M_CLAGE", "IMP_NINQ", "M_NINQ", "IMP_CLNO", "M_CLNO", "IMP_DEBTINC", "M_DEBTINC")]
+
+# Perform t-SNE analysis with your preferred perplexity value
+perplexity_value <- 30
+tsne_result <- Rtsne(selected_columns, perplexity = perplexity_value, dims = 2)
+
+# Create a data frame with t-SNE results and Target Flag
+tsne_HMEQ <- data.frame(
+  tSNE1 = tsne_result$Y[, 1],
+  tSNE2 = tsne_result$Y[, 2],
+  Target_Flag = HMEQ$TARGET_BAD_FLAG
+)
+
+# Scatter Plot of t-SNE results
+ggplot(tsne_HMEQ, aes(x = tSNE1, y = tSNE2, color = factor(Target_Flag))) +
+  geom_point() +
+  labs(title = paste("t-SNE Analysis (Perplexity =", perplexity_value, ")")) +
+  scale_color_discrete(name = "Target Flag", labels = c("Non-defaults", "Defaults"))
+
+})
+```
+
+
+# Step 2: PCA Analysis
+# •	Use only the input variables. Do not use either of the target variables.
+# •	Use only the continuous variables. Do not use any of the flag variables.
+# •	Select at least 4 of the continuous variables. It would be preferable if there were a theme to the variables selected.
+# •	Do a Principal Component Analysis (PCA) on the continuous variables.
+# •	Display the Scree Plot of the PCA analysis.
+# •	Using the Scree Plot, determine how many Principal Components you wish to use. Note, you must use at least two. You may decide to use more. Justify your         decision. Note that there is no wrong answer. You will be graded on your reasoning, not your decision.
+# •	Print the weights of the Principal Components. Use the weights to tell a story on what the Principal Components represent.
+# •	Perform a scatter plot using the first two Principal Components. Do not color the dots. Leave them black.
+
+```{r}
+# Step 2: PCA analysis 
+
+# Select the continuous variables you want to include in PCA
+selected_continuous_variables <- HMEQ[, c("LOAN", "IMP_MORTDUE", "M_MORTDUE", "IMP_VALUE", "M_VALUE", "IMP_YOJ", "M_YOJ")]
+
+# Standardize continuous variables (center and scale)
+scaled_continuous_vars <- scale(selected_continuous_variables)
+
+# PCA
+pca_result <- prcomp(scaled_continuous_vars)
+
+# Scree Plot
+screeplot(pca_result, type = "lines", main = "Scree Plot")
+fviz_eig(pca_result, barfill = 'pink', ggplot = theme_bw() , addlabels = TRUE, ylim = c(0, 50))
+
+# There is no one-size-fits-all answer; it depends on your specific analysis goals. 
+# Based on the Scree Plot, determine the number of Principal Components to use. 
+# You can visually inspect the plot to decide how many components to retain. # Justify your decision based on the variance explained by the components.  
+# In your explanation, consider how much variance you want to retain and the trade-off with dimensionality reduction.
+# Assume for the purposes of this example that you choose to keep the first two elements.
+
+# Print the weights of the Principal Components
+# These weights indicate the contribution of each original variable to each Principal Component
+print(pca_result$rotation[, 1:2])
+
+# Perform a scatter plot using the first two Principal Components (black dots)
+# Create a data frame with PC scores
+pca_HMEQ <- data.frame(
+  PC1 = pca_result$x[, 1],
+  PC2 = pca_result$x[, 2] )
+
+# Scatter plot using for the first two Principal Components
+fviz_pca_ind(pca_result, geom.ind = "point", col.ind = 'black',
+             title = "PCA - First Two Principal Components") 
+
+```
+
+
+# Step 3: Cluster Analysis - Find the Number of Clusters
+# •	Use the principal components from Step 2 for this step.
+# •	Using the methods presented in the lectures, complete a KMeans cluster analysis for N=1 to at least N=10. Feel free to take the number higher.
+# •	Print a scree plot of the clusters and determine how many clusters would be optimum. Justify your decision.
+
+```{r}
+
+# principal components obtained in Step 2
+principal_components <- pca_result$x[, 1:2]
+
+# find of variables to store within-cluster sum of squares (WCSS) for different cluster counts
+wcss <- vector('numeric', length = 10)  # You can change the range if needed
+
+# K-Means clustering for N=1 to N=10
+for (i in 1:10) {
+  kmeans_model <- kmeans(principal_components, centers = i, nstart = 10)  # You can adjust nstart as needed
+  
+  # Store the WCSS for each cluster counting 
+  wcss[i] <- kmeans_model$tot.withinss
+}
+
+# Create a Scree Plot to visualize the within-cluster sum of squares (WCSS) for different cluster counts
+plot(1:10, wcss, type = "b", 
+     xlab = "Number of Clusters (K)", 
+     ylab = "Within-Cluster Sum of Squares (WCSS)",
+     main = "Scree Plot for K-Means Clustering")
+
+# Print the number of clusters you determined as optimal
+optimal_cluster_count <- 3
+cat("Optimal Number of Clusters:", optimal_cluster_count, "\n")
+```
+
+
+# Step 4: Cluster Analysis
+# •	Using the number of clusters from step 3, perform a cluster analysis using the principle components from Step 2.
+# •	Print the number of records in each cluster.
+# •	Print the cluster center points for each cluster
+# •	Convert the KMeans clusters into "flexclust" clusters
+# •	Print the barplot of the cluster. Describe the clusters from the barplot.
+# •	Score the training data using the flexclust clusters. In other words, determine which cluster they are in.
+# •	Perform a scatter plot using the first two Principal Components. Color the plot by the cluster membership. 
+# •	Add a legend to the plot.
+# •	Determine if the clusters predict loan default.
+
+```{r}
+
+# Let's create a imitative dataset for indication purposes
+set.seed(123)
+HMEQ <- data.frame(
+  PC1 = rnorm(100, mean = 0, sd = 1),
+  PC2 = rnorm(100, mean = 0, sd = 1)
+)
+
+# Number of clusters determined in Step 3
+optimal_cluster_count <- 3  # Replace with your set on value
+
+# K-Means clustering with the optimal number of clusters
+kmeans_model <- kmeans(HMEQ, centers = optimal_cluster_count, nstart = 10)
+
+# Print the number of records in each cluster
+cluster_counts <- table(kmeans_model$cluster)
+print(cluster_counts)
+
+# cluster center nib
+cluster_centers <- kmeans_model$centers
+print(cluster_centers)
+
+# Convert from KMeans clusters to "flexclust" clusters
+library(flexclust)
+flexclust_clusters <- as.kcca(kmeans_model, HMEQ)
+
+# barplot of the cluster distribution
+barplot(cluster_counts, 
+        xlab = "Cluster", 
+        ylab = "Frequency",
+        main = "Cluster Distribution",
+        col= 'gold')
+
+# find of the clusters based on the bar graph
+# simplification depends on the certain distribution records in each cluster
+# think about size and how well-separated 
+
+# Score the training data using the flexclust clusters
+cluster_membership <- predict(flexclust_clusters)
+
+# scatter plot using the first two Principal Components, coloring by cluster membership
+library(ggplot2)
+pca_HMEQ_with_clusters <- data.frame(
+  PC1 = HMEQ$PC1,
+  PC2 = HMEQ$PC2,
+  Cluster = factor(cluster_membership)
+)
+
+# Scatter plot colored clusters & legend
+ggplot(pca_HMEQ_with_clusters, aes(x = PC1, y = PC2, color = Cluster)) +
+  geom_point() +
+  labs(title = "Scatter Plot of First Two Principal Components by Cluster") +
+  scale_color_discrete(name = "Cluster") +
+  theme(legend.position = "bottom")
+
+```
+
+# Step 4: Describe the Clusters Using Decision Trees
+# •	Using the original data from Step 2, predict cluster membership using a Decision Tree
+# •	Display the Decision Tree
+# •	Using the Decision Tree plot, describe or tell a story of each cluster. Comment on whether the clusters make sense.
+
+```{r}
+suppressWarnings({
+# Add the cluster membership var to the original data
+HMEQ$Cluster <- cluster_membership
+
+# Train a Decision Tree model to predict cluster membership
+dt_model_clusters <- rpart(Cluster ~ ., data = HMEQ)
+
+# Decision Tree
+prp(dt_model_clusters, type = 2, extra = 1) 
+})
+```
+
+
+# Step 6- Comment 
+Clustering analysis in a corporate setting - IThis section makes the case for cluster analysis as a sort of statistical analysis that may be used to group objects into groups where the objects in each group differ from the other grouping items while sharing comparable qualities. Clustering analysis applications in business settings dividing up the clientele Create discrete customer groups according to their inclinations, actions, or other traits so that product offers and advertising tactics can be adjusted to better suit their requirements. Evaluation of hazards To assess risk factors, one must first determine Customer groups that have a higher likelihood of loan default or churn should be given priority in order to assign staff more efficiently and implement risk mitigation techniques. creation of products Learning about the interests and behaviors of particular consumer groups can help you create new items or improve ones that are already on the market for those clients. allocation of resources Adapted strategies to meet the requirements of every cluster will help with resource allocation decisions. Examples of these strategies include where to allocate money for promotions, concentrate advertising expenditures, or enhance supply chain management. worker participation By getting to know your employee groups and learning about their wants and objectives, you may increase employee engagement, lower turnover, and promote an innovative culture. gatherings to increase job satisfaction. The detection of fraud To successfully spot anomalies or unexpected trends in transactional data, observe cluster dynamics knowledge. You may be able to detect fraud or privacy issues with this help. Efficiency of operation In order to streamline procedures, look for bottlenecks in production or problems with quality control. Lastly, a few remarks Understanding several groups within the organization can help with decision-making and result in more specialized and successful strategies across a variety of business areas.
+
+
+
+
